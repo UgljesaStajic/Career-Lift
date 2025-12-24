@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Upload, Sparkles, ArrowRight, Loader2, Download, FileText, Camera, User as UserIcon, CheckCircle, Phone, Mail as MailIcon, MapPin, Globe } from 'lucide-react';
+import { Upload, Sparkles, ArrowRight, Loader2, Download, FileText, Camera, User as UserIcon, CheckCircle, Phone, Mail as MailIcon, MapPin, Globe, AlertTriangle } from 'lucide-react';
 import { enhanceCV } from '../services/gemini';
 import { EnhancedCV, User } from '../types';
 
@@ -10,9 +10,11 @@ interface CVEnhancerProps {
   onCVUpdate: (cv: string) => void;
   onEnhancedCVUpdate: (enhanced: EnhancedCV, raw: string, jobDesc: string, userImage?: string) => void;
   user: User | null;
+  savedCVCount: number;
+  onPricingNavigate: () => void;
 }
 
-const CVEnhancer: React.FC<CVEnhancerProps> = ({ currentCV, initialJobDescription = '', onCVUpdate, onEnhancedCVUpdate, user }) => {
+const CVEnhancer: React.FC<CVEnhancerProps> = ({ currentCV, initialJobDescription = '', onCVUpdate, onEnhancedCVUpdate, user, savedCVCount, onPricingNavigate }) => {
   const [cvText, setCvText] = useState(currentCV);
   const [jobDescription, setJobDescription] = useState(initialJobDescription);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -28,6 +30,9 @@ const CVEnhancer: React.FC<CVEnhancerProps> = ({ currentCV, initialJobDescriptio
   useEffect(() => {
     setJobDescription(initialJobDescription);
   }, [initialJobDescription]);
+
+  const resumeLimit = user?.tier === 'pro' ? Infinity : user?.tier === 'plus' ? 10 : 1;
+  const isOverLimit = savedCVCount >= resumeLimit;
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -60,6 +65,11 @@ const CVEnhancer: React.FC<CVEnhancerProps> = ({ currentCV, initialJobDescriptio
 
   const handleEnhance = async () => {
     if (!cvText || !jobDescription) return;
+    if (isOverLimit) {
+      onPricingNavigate();
+      return;
+    }
+    
     setIsProcessing(true);
     try {
       const enhanced = await enhanceCV(cvText, jobDescription);
@@ -80,8 +90,8 @@ const CVEnhancer: React.FC<CVEnhancerProps> = ({ currentCV, initialJobDescriptio
     setTimeout(async () => {
       const element = resumeRef.current;
       const opt = {
-        margin: [0, 0, 0, 0], // Margins handled internally by template padding
-        filename: `${user?.name.replace(/\s+/g, '_') || 'Executive'}_CV.pdf`,
+        margin: [10, 0, 10, 0],
+        filename: `${user?.name.replace(/\s+/g, '_') || 'Portfolio'}_CV.pdf`,
         image: { type: 'jpeg', quality: 1.0 },
         html2canvas: { 
           scale: 4, 
@@ -93,7 +103,10 @@ const CVEnhancer: React.FC<CVEnhancerProps> = ({ currentCV, initialJobDescriptio
           backgroundColor: '#ffffff' 
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'], avoid: ['header', 'section', 'h3', 'h4'] }
+        pagebreak: { 
+          mode: ['avoid-all', 'css', 'legacy'], 
+          avoid: ['header', 'section', 'h3', 'h4', '.avoid-break'] 
+        }
       };
 
       try {
@@ -160,13 +173,13 @@ const CVEnhancer: React.FC<CVEnhancerProps> = ({ currentCV, initialJobDescriptio
           </div>
         </div>
 
-        {/* HIGH-FIDELITY PDF TEMPLATE - REFINED TO MATCH IMAGE */}
+        {/* HIGH-FIDELITY PDF TEMPLATE */}
         <div className="absolute left-[-9999px] top-[-9999px] pointer-events-none">
           <div ref={resumeRef} 
                style={{ 
                  width: '210mm', 
                  minHeight: '297mm',
-                 padding: '15mm 15mm',
+                 padding: '20mm 20mm',
                  backgroundColor: 'white',
                  display: 'flex',
                  flexDirection: 'column',
@@ -174,17 +187,15 @@ const CVEnhancer: React.FC<CVEnhancerProps> = ({ currentCV, initialJobDescriptio
                  color: '#1a202c'
                }}>
             
-            {/* Header Section */}
-            <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '25px' }}>
+            <header className="avoid-break" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '30px', borderBottom: '2px solid #3b82f6', paddingBottom: '25px' }}>
               <div style={{ flex: 1 }}>
-                <h1 style={{ fontSize: '32pt', fontWeight: 900, color: '#1a202c', margin: 0, letterSpacing: '-0.02em', lineHeight: '1.1' }}>
-                  {user?.name || 'NAME SURNAME'}
+                <h1 style={{ fontSize: '32pt', fontWeight: 900, color: '#1a202c', margin: 0, letterSpacing: '-0.02em', lineHeight: '1.1', textTransform: 'uppercase' }}>
+                  {user?.name || result.contact.email.split('@')[0].replace('.', ' ') || 'CANDIDATE NAME'}
                 </h1>
                 <h2 style={{ fontSize: '18pt', fontWeight: 600, color: '#3b82f6', margin: '8px 0 15px 0' }}>
                   {result.jobTitle}
                 </h2>
                 
-                {/* Contact Icons Row */}
                 <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10pt', fontWeight: 600, color: '#4a5568' }}>
                      <div style={{ border: '1.5px solid #3b82f6', padding: '4px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -207,8 +218,7 @@ const CVEnhancer: React.FC<CVEnhancerProps> = ({ currentCV, initialJobDescriptio
                 </div>
               </div>
               
-              {/* Profile Photo */}
-              <div style={{ width: '120px', height: '140px', borderRadius: '4px', overflow: 'hidden', backgroundColor: '#f7fafc', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
+              <div style={{ width: '130px', height: '150px', borderRadius: '4px', overflow: 'hidden', backgroundColor: '#f7fafc', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
                 {userImage ? (
                   <img src={userImage} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
@@ -219,42 +229,39 @@ const CVEnhancer: React.FC<CVEnhancerProps> = ({ currentCV, initialJobDescriptio
               </div>
             </header>
 
-            {/* Layout Body - Two Columns */}
-            <div style={{ display: 'flex', gap: '35px', flexGrow: 1 }}>
-              
-              {/* Left Column (Main Content) */}
-              <div style={{ width: '130mm', display: 'flex', flexDirection: 'column', gap: '25px' }}>
-                
-                {/* Profile Summary */}
-                <section>
-                  <h3 style={{ fontSize: '11pt', fontWeight: 800, textTransform: 'uppercase', color: '#4a5568', letterSpacing: '0.05em', margin: '0 0 10px 0', borderBottom: '1.5px solid #cbd5e0', paddingBottom: '6px' }}>
-                    Profile Summary
+            <div style={{ display: 'flex', gap: '40px', flexGrow: 1 }}>
+              <div style={{ width: '120mm', display: 'flex', flexDirection: 'column', gap: '30px' }}>
+                <section className="avoid-break">
+                  <h3 style={{ fontSize: '12pt', fontWeight: 800, textTransform: 'uppercase', color: '#1a202c', letterSpacing: '0.05em', margin: '0 0 12px 0', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '6px' }}>
+                    Profile Narrative
                   </h3>
-                  <p style={{ fontSize: '10pt', lineHeight: '1.6', color: '#2d3748', margin: 0, textAlign: 'justify' }}>
+                  <p style={{ fontSize: '10.5pt', lineHeight: '1.7', color: '#2d3748', margin: 0, textAlign: 'justify' }}>
                     {result.summary}
                   </p>
                 </section>
 
-                {/* Experience */}
                 <section>
-                  <h3 style={{ fontSize: '11pt', fontWeight: 800, textTransform: 'uppercase', color: '#4a5568', letterSpacing: '0.05em', margin: '0 0 15px 0', borderBottom: '1.5px solid #cbd5e0', paddingBottom: '6px' }}>
-                    Experience
+                  <h3 style={{ fontSize: '12pt', fontWeight: 800, textTransform: 'uppercase', color: '#1a202c', letterSpacing: '0.05em', margin: '0 0 18px 0', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '6px' }}>
+                    Work Experience
                   </h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
                     {result.experience.map((exp, i) => (
-                      <div key={i} style={{ pageBreakInside: 'avoid' }}>
-                        <h4 style={{ fontSize: '12.5pt', fontWeight: 800, color: '#1a202c', margin: 0 }}>
-                          {exp.role} <span style={{ fontWeight: 400, color: '#718096' }}>|</span> {exp.company}
-                        </h4>
-                        <div style={{ fontSize: '10pt', fontWeight: 600, fontStyle: 'italic', color: '#4a5568', margin: '4px 0 10px 0' }}>
-                          {exp.dates} <span style={{ fontWeight: 400 }}>|</span> {exp.location}
+                      <div key={i} className="avoid-break" style={{ pageBreakInside: 'avoid' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
+                          <h4 style={{ fontSize: '13pt', fontWeight: 800, color: '#1a202c', margin: 0 }}>
+                            {exp.role}
+                          </h4>
+                          <span style={{ fontSize: '10pt', fontWeight: 700, color: '#3b82f6' }}>{exp.dates}</span>
                         </div>
-                        <p style={{ fontSize: '9.5pt', lineHeight: '1.5', color: '#2d3748', marginBottom: '8px' }}>
+                        <div style={{ fontSize: '11pt', fontWeight: 700, fontStyle: 'italic', color: '#4a5568', marginBottom: '10px' }}>
+                          {exp.company} <span style={{ fontWeight: 400 }}>|</span> {exp.location}
+                        </div>
+                        <p style={{ fontSize: '10pt', lineHeight: '1.6', color: '#4a5568', marginBottom: '10px' }}>
                           {exp.description}
                         </p>
-                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
                           {exp.achievements.map((ach, j) => (
-                            <li key={j} style={{ fontSize: '9.5pt', lineHeight: '1.4', color: '#2d3748', display: 'flex', gap: '8px' }}>
+                            <li key={j} style={{ fontSize: '10pt', lineHeight: '1.4', color: '#2d3748', display: 'flex', gap: '10px' }}>
                               <span style={{ color: '#3b82f6', fontWeight: 900 }}>•</span>
                               <span>{ach}</span>
                             </li>
@@ -264,67 +271,35 @@ const CVEnhancer: React.FC<CVEnhancerProps> = ({ currentCV, initialJobDescriptio
                     ))}
                   </div>
                 </section>
-
-                {/* Languages */}
-                <section style={{ pageBreakInside: 'avoid' }}>
-                  <h3 style={{ fontSize: '11pt', fontWeight: 800, textTransform: 'uppercase', color: '#4a5568', letterSpacing: '0.05em', margin: '0 0 10px 0', borderBottom: '1.5px solid #cbd5e0', paddingBottom: '6px' }}>
-                    Languages
-                  </h3>
-                  <p style={{ fontSize: '10pt', fontWeight: 600, color: '#2d3748', margin: 0 }}>
-                    {result.languages}
-                  </p>
-                </section>
               </div>
 
-              {/* Right Column (Sidebar) */}
-              <div style={{ width: '50mm', display: 'flex', flexDirection: 'column', gap: '25px' }}>
-                
-                {/* Education */}
-                <section>
-                  <h3 style={{ fontSize: '11pt', fontWeight: 800, textTransform: 'uppercase', color: '#4a5568', letterSpacing: '0.05em', margin: '0 0 12px 0', borderBottom: '1.5px solid #cbd5e0', paddingBottom: '6px' }}>
+              <div style={{ width: '50mm', display: 'flex', flexDirection: 'column', gap: '30px' }}>
+                <section className="avoid-break">
+                  <h3 style={{ fontSize: '11pt', fontWeight: 800, textTransform: 'uppercase', color: '#1a202c', letterSpacing: '0.05em', margin: '0 0 15px 0', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '6px' }}>
                     Education
                   </h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
                     {result.education.map((edu, i) => (
                       <div key={i}>
                         <div style={{ fontSize: '10.5pt', fontWeight: 800, color: '#1a202c', lineHeight: '1.2' }}>{edu.degree}</div>
                         <div style={{ fontSize: '9pt', fontWeight: 700, fontStyle: 'italic', color: '#4a5568', margin: '2px 0' }}>{edu.institution}</div>
                         <div style={{ fontSize: '8.5pt', color: '#718096' }}>{edu.locationAndDates}</div>
-                        {edu.specialization && (
-                          <div style={{ fontSize: '8.5pt', color: '#4a5568', fontStyle: 'italic', marginTop: '3px' }}>{edu.specialization}</div>
-                        )}
                       </div>
                     ))}
                   </div>
                 </section>
 
-                {/* Certifications */}
-                <section>
-                  <h3 style={{ fontSize: '11pt', fontWeight: 800, textTransform: 'uppercase', color: '#4a5568', letterSpacing: '0.05em', margin: '0 0 12px 0', borderBottom: '1.5px solid #cbd5e0', paddingBottom: '6px' }}>
-                    Certifications & Courses
-                  </h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {result.certifications.map((cert, i) => (
-                      <div key={i}>
-                        <div style={{ fontSize: '9.5pt', fontWeight: 800, color: '#1a202c', lineHeight: '1.2' }}>{cert.name}</div>
-                        <div style={{ fontSize: '8.5pt', fontWeight: 700, color: '#4a5568' }}>{cert.issuerAndYear}</div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-
-                {/* Skills */}
-                <section>
-                  <h3 style={{ fontSize: '11pt', fontWeight: 800, textTransform: 'uppercase', color: '#4a5568', letterSpacing: '0.05em', margin: '0 0 12px 0', borderBottom: '1.5px solid #cbd5e0', paddingBottom: '6px' }}>
+                <section className="avoid-break">
+                  <h3 style={{ fontSize: '11pt', fontWeight: 800, textTransform: 'uppercase', color: '#1a202c', letterSpacing: '0.05em', margin: '0 0 15px 0', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '6px' }}>
                     Skills & Expertise
                   </h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
                     {result.skills.map((skill, i) => (
                       <div key={i}>
-                        <div style={{ fontSize: '9.5pt', fontWeight: 800, color: '#1a202c', marginBottom: '6px' }}>{skill.category}</div>
-                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <div style={{ fontSize: '10pt', fontWeight: 800, color: '#1a202c', marginBottom: '8px' }}>{skill.category}</div>
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
                           {skill.items.map((item, j) => (
-                            <li key={j} style={{ fontSize: '9pt', color: '#4a5568', lineHeight: '1.4' }}>• {item}</li>
+                            <li key={j} style={{ fontSize: '9.5pt', color: '#4a5568', lineHeight: '1.4' }}>• {item}</li>
                           ))}
                         </ul>
                       </div>
@@ -332,20 +307,27 @@ const CVEnhancer: React.FC<CVEnhancerProps> = ({ currentCV, initialJobDescriptio
                   </div>
                 </section>
 
-                {/* Tech Stack */}
-                <section>
-                  <h3 style={{ fontSize: '11pt', fontWeight: 800, textTransform: 'uppercase', color: '#4a5568', letterSpacing: '0.05em', margin: '0 0 10px 0', borderBottom: '1.5px solid #cbd5e0', paddingBottom: '6px' }}>
+                <section className="avoid-break">
+                  <h3 style={{ fontSize: '11pt', fontWeight: 800, textTransform: 'uppercase', color: '#1a202c', letterSpacing: '0.05em', margin: '0 0 12px 0', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '6px' }}>
                     Tech Stack
                   </h3>
-                  <p style={{ fontSize: '9pt', color: '#4a5568', lineHeight: '1.6', margin: 0 }}>
+                  <p style={{ fontSize: '9.5pt', color: '#4a5568', lineHeight: '1.6', margin: 0 }}>
                     {result.techStack}
+                  </p>
+                </section>
+                
+                <section className="avoid-break">
+                  <h3 style={{ fontSize: '11pt', fontWeight: 800, textTransform: 'uppercase', color: '#1a202c', letterSpacing: '0.05em', margin: '0 0 12px 0', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '6px' }}>
+                    Languages
+                  </h3>
+                  <p style={{ fontSize: '10pt', fontWeight: 600, color: '#2d3748', margin: 0 }}>
+                    {result.languages}
                   </p>
                 </section>
               </div>
             </div>
 
-            {/* Persistent Visual Footer */}
-            <footer style={{ marginTop: '30px', paddingTop: '15px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: 0.4 }}>
+            <footer className="pdf-footer" style={{ marginTop: 'auto', paddingTop: '20px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: 0.4 }}>
               <div style={{ fontSize: '8pt', fontWeight: 800, color: '#4a5568', textTransform: 'uppercase', letterSpacing: '0.2em' }}>
                 CareerLift AI • Professional Grade Strategy
               </div>
@@ -366,8 +348,23 @@ const CVEnhancer: React.FC<CVEnhancerProps> = ({ currentCV, initialJobDescriptio
         <p className="text-base font-medium text-muted max-lg mx-auto leading-relaxed opacity-80">Refine your professional trajectory through precision alignment and visual excellence.</p>
       </div>
 
-      <div className="space-y-8">
-        {/* Step 01: Profile & Photo */}
+      {isOverLimit && (
+        <div className="mb-10 p-6 bg-amber-500/10 border border-amber-500/30 rounded-3xl flex flex-col md:flex-row items-center gap-6 animate-in slide-in-from-top-4">
+          <div className="p-3 bg-amber-500 text-white rounded-2xl shadow-lg"><AlertTriangle className="w-6 h-6" /></div>
+          <div className="flex-grow text-center md:text-left">
+            <h4 className="font-black text-amber-500 tracking-tight">Generation Limit Reached</h4>
+            <p className="text-xs font-bold text-muted opacity-80 leading-relaxed">Your current <b>{user?.tier}</b> plan allows up to <b>{resumeLimit}</b> resume. Upgrade to continue crafting your story.</p>
+          </div>
+          <button 
+            onClick={onPricingNavigate}
+            className="px-6 py-3 bg-accent text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:scale-105 transition-all whitespace-nowrap"
+          >
+            See Plans
+          </button>
+        </div>
+      )}
+
+      <div className={`space-y-8 ${isOverLimit ? 'opacity-40 pointer-events-none' : ''}`}>
         <section className="glass-card p-8 rounded-3xl bg-card border border-main shadow-sm hover:border-accent transition-all">
           <div className="flex items-center gap-2.5 mb-8">
             <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center font-bold text-white text-xs shadow-sm">01</div>

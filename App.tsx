@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { Layout, FileText, Search, Video, Home, ChevronRight, Settings as SettingsIcon, Briefcase, User as UserIcon, BookOpen } from 'lucide-react';
-import { AppView, Theme, User, EnhancedCV, SavedCV } from './types';
+import { Layout, FileText, Search, Video, Home, ChevronRight, Settings as SettingsIcon, Briefcase, User as UserIcon, BookOpen, Crown } from 'lucide-react';
+import { AppView, Theme, User, EnhancedCV, SavedCV, SubscriptionTier, Language } from './types';
 import CVEnhancer from './components/CVEnhancer';
 import JobBoard from './components/JobBoard';
 import Resumes from './components/Resumes';
@@ -9,10 +9,12 @@ import VirtualInterview from './components/VirtualInterview';
 import Settings from './components/Settings';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
+import Pricing from './components/Pricing';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>('home');
   const [userCV, setUserCV] = useState<string>(() => localStorage.getItem('careerlift_cv') || '');
+  const [language, setLanguage] = useState<Language>(() => (localStorage.getItem('careerlift_lang') as Language) || 'en');
   
   const [savedCVs, setSavedCVs] = useState<SavedCV[]>(() => {
     const stored = localStorage.getItem('careerlift_saved_cvs');
@@ -39,6 +41,12 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('careerlift_saved_cvs', JSON.stringify(savedCVs));
   }, [savedCVs]);
+
+  useEffect(() => {
+    localStorage.setItem('careerlift_lang', language);
+    document.documentElement.lang = language;
+    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
+  }, [language]);
 
   useEffect(() => {
     if (activeCVId) {
@@ -93,6 +101,32 @@ const App: React.FC = () => {
     setCurrentView('login');
   };
 
+  const handleUpgrade = (tier: SubscriptionTier) => {
+    if (user) {
+      const updatedUser = { ...user, tier };
+      setUser(updatedUser);
+      localStorage.setItem('careerlift_session', JSON.stringify(updatedUser));
+      
+      const storedUsers = JSON.parse(localStorage.getItem('careerlift_users') || '[]');
+      const userIndex = storedUsers.findIndex((u: any) => u.email === user.email);
+      if (userIndex !== -1) {
+        storedUsers[userIndex].tier = tier;
+        localStorage.setItem('careerlift_users', JSON.stringify(storedUsers));
+      }
+      
+      setCurrentView('home');
+    }
+  };
+
+  const handleDeleteAccount = () => {
+    if (user) {
+      const storedUsers = JSON.parse(localStorage.getItem('careerlift_users') || '[]');
+      const filteredUsers = storedUsers.filter((u: any) => u.email !== user.email);
+      localStorage.setItem('careerlift_users', JSON.stringify(filteredUsers));
+      handleLogout();
+    }
+  };
+
   const getActiveCV = () => {
     if (!activeCVId) return null;
     return savedCVs.find(cv => cv.id === activeCVId)?.data || null;
@@ -107,6 +141,7 @@ const App: React.FC = () => {
     switch (currentView) {
       case 'login': return <Login onLoginSuccess={handleLoginSuccess} onNavigate={setCurrentView} />;
       case 'register': return <Register onRegisterSuccess={handleLoginSuccess} onNavigate={setCurrentView} />;
+      case 'pricing': return <Pricing currentTier={user?.tier || 'free'} onUpgrade={handleUpgrade} onNavigate={setCurrentView} />;
       case 'resumes':
         return <Resumes 
           savedCVs={savedCVs} 
@@ -123,11 +158,25 @@ const App: React.FC = () => {
           currentCV={editTarget?.rawText || userCV} 
           initialJobDescription={editTarget?.jobDescription || ''}
           user={user} 
+          savedCVCount={savedCVs.length}
+          onPricingNavigate={() => setCurrentView('pricing')}
         />;
       case 'job-board': 
         return <JobBoard userCV={userCV} enhancedCV={getActiveCV()} />;
-      case 'interview': return <VirtualInterview />;
-      case 'settings': return <Settings theme={theme} setTheme={setTheme} user={user} onLogout={handleLogout} />;
+      case 'interview': 
+        return <VirtualInterview userTier={user?.tier || 'free'} onPricingNavigate={() => setCurrentView('pricing')} />;
+      case 'settings': 
+        return <Settings 
+          theme={theme} 
+          setTheme={setTheme} 
+          user={user} 
+          onLogout={handleLogout} 
+          onPricingNavigate={() => setCurrentView('pricing')}
+          onUnsubscribe={() => handleUpgrade('free')}
+          onDeleteAccount={handleDeleteAccount}
+          language={language}
+          setLanguage={setLanguage}
+        />;
       default: return (
         <div className="max-w-5xl mx-auto px-6 py-20 pb-40 animate-in fade-in duration-1000">
           <div className="text-center mb-24">
@@ -194,6 +243,15 @@ const App: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-3">
+              {user?.tier !== 'free' && (
+                <div 
+                  onClick={() => setCurrentView('pricing')}
+                  className="hidden md:flex items-center gap-1.5 px-3 py-1 bg-accent/10 border border-accent/20 rounded-full cursor-pointer hover:bg-accent/20 transition-all"
+                >
+                  <Crown className="w-3.5 h-3.5 text-accent" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-accent">{user?.tier}</span>
+                </div>
+              )}
               {user ? (
                 <div onClick={() => setCurrentView('settings')} className="flex items-center gap-2.5 p-1.5 pl-3 border border-main rounded-xl hover:bg-card cursor-pointer transition-colors">
                   <span className="text-[10px] font-black uppercase tracking-widest text-muted">{user.name.split(' ')[0]}</span>

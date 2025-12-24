@@ -24,7 +24,11 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, onNavigate }) => {
       const user = storedUsers.find((u: any) => u.email === email && u.password === password);
 
       if (user) {
-        onLoginSuccess({ name: user.name, email: user.email });
+        onLoginSuccess({ 
+          name: user.name, 
+          email: user.email, 
+          tier: user.tier || 'free' 
+        });
       } else {
         setError('Invalid credentials. Please verify your details.');
         setIsLoading(false);

@@ -7,7 +7,7 @@
     <title>CareerLift AI - Your Professional Edge</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" crossorigin="anonymous"></script>
     <style>
         :root {
           --accent: #3b82f6; /* Blue 500 */
@@ -77,6 +77,13 @@
           width: 210mm; /* A4 width */
           padding: 20mm;
           margin: 0 auto;
+        }
+
+        .premium-gradient {
+          background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        }
+        .dark .premium-gradient {
+          background: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
         }
     </style>
 <script type="importmap">

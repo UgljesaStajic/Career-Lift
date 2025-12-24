@@ -29,13 +29,14 @@ const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onNavigate }) =>
         return;
       }
 
-      const newUser = { name, email, password };
+      // Initialize with Free tier
+      const newUser = { name, email, password, tier: 'free' };
       storedUsers.push(newUser);
       localStorage.setItem('careerlift_users', JSON.stringify(storedUsers));
       
       setIsSuccess(true);
       setTimeout(() => {
-        onRegisterSuccess({ name, email });
+        onRegisterSuccess({ name, email, tier: 'free' });
       }, 800);
     }, 1500);
   };

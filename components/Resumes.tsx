@@ -38,7 +38,7 @@ const Resumes: React.FC<ResumesProps> = ({ savedCVs, setSavedCVs, activeCVId, se
       if (!element) return;
 
       const opt = {
-        margin: [0, 0, 0, 0],
+        margin: [10, 0, 10, 0],
         filename: `${cv.data.jobTitle.replace(/\s+/g, '_')}_CV.pdf`,
         image: { type: 'jpeg', quality: 1.0 },
         html2canvas: { 
@@ -53,7 +53,7 @@ const Resumes: React.FC<ResumesProps> = ({ savedCVs, setSavedCVs, activeCVId, se
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { 
           mode: ['avoid-all', 'css', 'legacy'],
-          avoid: ['header', 'section', 'h3', 'h4']
+          avoid: ['header', 'section', 'h3', 'h4', '.avoid-break']
         }
       };
 
@@ -215,13 +215,13 @@ const Resumes: React.FC<ResumesProps> = ({ savedCVs, setSavedCVs, activeCVId, se
   );
 };
 
-// Unified High-Fidelity Template - Refined to match image reference
+// Unified High-Fidelity Template
 const ResumePDFTemplate: React.FC<{ resumeRef: React.RefObject<HTMLDivElement>, result: EnhancedCV, userImage?: string }> = ({ resumeRef, result, userImage }) => (
   <div ref={resumeRef} 
        style={{ 
          width: '210mm', 
          minHeight: '297mm',
-         padding: '15mm 15mm',
+         padding: '20mm 20mm',
          backgroundColor: 'white',
          display: 'flex',
          flexDirection: 'column',
@@ -229,17 +229,15 @@ const ResumePDFTemplate: React.FC<{ resumeRef: React.RefObject<HTMLDivElement>, 
          color: '#1a202c'
        }}>
     
-    {/* Header Section */}
-    <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '25px' }}>
+    <header className="avoid-break" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '30px', borderBottom: '2px solid #3b82f6', paddingBottom: '25px' }}>
       <div style={{ flex: 1 }}>
-        <h1 style={{ fontSize: '32pt', fontWeight: 900, color: '#1a202c', margin: 0, letterSpacing: '-0.02em', lineHeight: '1.1' }}>
-          EXECUTIVE PORTFOLIO
+        <h1 style={{ fontSize: '32pt', fontWeight: 900, color: '#1a202c', margin: 0, letterSpacing: '-0.02em', lineHeight: '1.1', textTransform: 'uppercase' }}>
+          {result.contact.email.split('@')[0].replace('.', ' ') || 'EXECUTIVE PORTFOLIO'}
         </h1>
         <h2 style={{ fontSize: '18pt', fontWeight: 600, color: '#3b82f6', margin: '8px 0 15px 0' }}>
           {result.jobTitle}
         </h2>
         
-        {/* Contact Icons Row */}
         <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10pt', fontWeight: 600, color: '#4a5568' }}>
              <div style={{ border: '1.5px solid #3b82f6', padding: '4px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -262,8 +260,7 @@ const ResumePDFTemplate: React.FC<{ resumeRef: React.RefObject<HTMLDivElement>, 
         </div>
       </div>
       
-      {/* Profile Photo */}
-      <div style={{ width: '120px', height: '140px', borderRadius: '4px', overflow: 'hidden', backgroundColor: '#f7fafc', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
+      <div style={{ width: '130px', height: '150px', borderRadius: '4px', overflow: 'hidden', backgroundColor: '#f7fafc', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
         {userImage ? (
           <img src={userImage} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
@@ -274,41 +271,39 @@ const ResumePDFTemplate: React.FC<{ resumeRef: React.RefObject<HTMLDivElement>, 
       </div>
     </header>
 
-    <div style={{ display: 'flex', gap: '35px', flexGrow: 1 }}>
-      
-      {/* Left Column (Main Content) */}
-      <div style={{ width: '130mm', display: 'flex', flexDirection: 'column', gap: '25px' }}>
-        
-        {/* Profile Summary */}
-        <section>
-          <h3 style={{ fontSize: '11pt', fontWeight: 800, textTransform: 'uppercase', color: '#4a5568', letterSpacing: '0.05em', margin: '0 0 10px 0', borderBottom: '1.5px solid #cbd5e0', paddingBottom: '6px' }}>
-            Profile Summary
+    <div style={{ display: 'flex', gap: '40px', flexGrow: 1 }}>
+      <div style={{ width: '120mm', display: 'flex', flexDirection: 'column', gap: '30px' }}>
+        <section className="avoid-break">
+          <h3 style={{ fontSize: '12pt', fontWeight: 800, textTransform: 'uppercase', color: '#1a202c', letterSpacing: '0.05em', margin: '0 0 12px 0', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '6px' }}>
+            Profile Narrative
           </h3>
-          <p style={{ fontSize: '10pt', lineHeight: '1.6', color: '#2d3748', margin: 0, textAlign: 'justify' }}>
+          <p style={{ fontSize: '10.5pt', lineHeight: '1.7', color: '#2d3748', margin: 0, textAlign: 'justify' }}>
             {result.summary}
           </p>
         </section>
 
-        {/* Experience */}
         <section>
-          <h3 style={{ fontSize: '11pt', fontWeight: 800, textTransform: 'uppercase', color: '#4a5568', letterSpacing: '0.05em', margin: '0 0 15px 0', borderBottom: '1.5px solid #cbd5e0', paddingBottom: '6px' }}>
-            Experience
+          <h3 style={{ fontSize: '12pt', fontWeight: 800, textTransform: 'uppercase', color: '#1a202c', letterSpacing: '0.05em', margin: '0 0 18px 0', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '6px' }}>
+            Work Experience
           </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
             {result.experience.map((exp, i) => (
-              <div key={i} style={{ pageBreakInside: 'avoid' }}>
-                <h4 style={{ fontSize: '12.5pt', fontWeight: 800, color: '#1a202c', margin: 0 }}>
-                  {exp.role} <span style={{ fontWeight: 400, color: '#718096' }}>|</span> {exp.company}
-                </h4>
-                <div style={{ fontSize: '10pt', fontWeight: 600, fontStyle: 'italic', color: '#4a5568', margin: '4px 0 10px 0' }}>
-                  {exp.dates} <span style={{ fontWeight: 400 }}>|</span> {exp.location}
+              <div key={i} className="avoid-break" style={{ pageBreakInside: 'avoid' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
+                  <h4 style={{ fontSize: '13pt', fontWeight: 800, color: '#1a202c', margin: 0 }}>
+                    {exp.role}
+                  </h4>
+                  <span style={{ fontSize: '10pt', fontWeight: 700, color: '#3b82f6' }}>{exp.dates}</span>
                 </div>
-                <p style={{ fontSize: '9.5pt', lineHeight: '1.5', color: '#2d3748', marginBottom: '8px' }}>
+                <div style={{ fontSize: '11pt', fontWeight: 700, fontStyle: 'italic', color: '#4a5568', marginBottom: '10px' }}>
+                  {exp.company} <span style={{ fontWeight: 400 }}>|</span> {exp.location}
+                </div>
+                <p style={{ fontSize: '10pt', lineHeight: '1.6', color: '#4a5568', marginBottom: '10px' }}>
                   {exp.description}
                 </p>
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {exp.achievements.map((ach, j) => (
-                    <li key={j} style={{ fontSize: '9.5pt', lineHeight: '1.4', color: '#2d3748', display: 'flex', gap: '8px' }}>
+                    <li key={j} style={{ fontSize: '10pt', lineHeight: '1.4', color: '#2d3748', display: 'flex', gap: '10px' }}>
                       <span style={{ color: '#3b82f6', fontWeight: 900 }}>•</span>
                       <span>{ach}</span>
                     </li>
@@ -318,27 +313,14 @@ const ResumePDFTemplate: React.FC<{ resumeRef: React.RefObject<HTMLDivElement>, 
             ))}
           </div>
         </section>
-
-        {/* Languages */}
-        <section style={{ pageBreakInside: 'avoid' }}>
-          <h3 style={{ fontSize: '11pt', fontWeight: 800, textTransform: 'uppercase', color: '#4a5568', letterSpacing: '0.05em', margin: '0 0 10px 0', borderBottom: '1.5px solid #cbd5e0', paddingBottom: '6px' }}>
-            Languages
-          </h3>
-          <p style={{ fontSize: '10pt', fontWeight: 600, color: '#2d3748', margin: 0 }}>
-            {result.languages}
-          </p>
-        </section>
       </div>
 
-      {/* Right Column (Sidebar) */}
-      <div style={{ width: '50mm', display: 'flex', flexDirection: 'column', gap: '25px' }}>
-        
-        {/* Education */}
-        <section>
-          <h3 style={{ fontSize: '11pt', fontWeight: 800, textTransform: 'uppercase', color: '#4a5568', letterSpacing: '0.05em', margin: '0 0 12px 0', borderBottom: '1.5px solid #cbd5e0', paddingBottom: '6px' }}>
+      <div style={{ width: '50mm', display: 'flex', flexDirection: 'column', gap: '30px' }}>
+        <section className="avoid-break">
+          <h3 style={{ fontSize: '11pt', fontWeight: 800, textTransform: 'uppercase', color: '#1a202c', letterSpacing: '0.05em', margin: '0 0 15px 0', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '6px' }}>
             Education
           </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
             {result.education.map((edu, i) => (
               <div key={i}>
                 <div style={{ fontSize: '10.5pt', fontWeight: 800, color: '#1a202c', lineHeight: '1.2' }}>{edu.degree}</div>
@@ -349,33 +331,17 @@ const ResumePDFTemplate: React.FC<{ resumeRef: React.RefObject<HTMLDivElement>, 
           </div>
         </section>
 
-        {/* Certifications */}
-        <section>
-          <h3 style={{ fontSize: '11pt', fontWeight: 800, textTransform: 'uppercase', color: '#4a5568', letterSpacing: '0.05em', margin: '0 0 12px 0', borderBottom: '1.5px solid #cbd5e0', paddingBottom: '6px' }}>
-            Certifications & Courses
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {result.certifications.map((cert, i) => (
-              <div key={i}>
-                <div style={{ fontSize: '9.5pt', fontWeight: 800, color: '#1a202c', lineHeight: '1.2' }}>{cert.name}</div>
-                <div style={{ fontSize: '8.5pt', fontWeight: 700, color: '#4a5568' }}>{cert.issuerAndYear}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Skills */}
-        <section>
-          <h3 style={{ fontSize: '11pt', fontWeight: 800, textTransform: 'uppercase', color: '#4a5568', letterSpacing: '0.05em', margin: '0 0 12px 0', borderBottom: '1.5px solid #cbd5e0', paddingBottom: '6px' }}>
+        <section className="avoid-break">
+          <h3 style={{ fontSize: '11pt', fontWeight: 800, textTransform: 'uppercase', color: '#1a202c', letterSpacing: '0.05em', margin: '0 0 15px 0', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '6px' }}>
             Skills & Expertise
           </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
             {result.skills.map((skill, i) => (
               <div key={i}>
-                <div style={{ fontSize: '9.5pt', fontWeight: 800, color: '#1a202c', marginBottom: '6px' }}>{skill.category}</div>
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <div style={{ fontSize: '10pt', fontWeight: 800, color: '#1a202c', marginBottom: '8px' }}>{skill.category}</div>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   {skill.items.map((item, j) => (
-                    <li key={j} style={{ fontSize: '9pt', color: '#4a5568', lineHeight: '1.4' }}>• {item}</li>
+                    <li key={j} style={{ fontSize: '9.5pt', color: '#4a5568', lineHeight: '1.4' }}>• {item}</li>
                   ))}
                 </ul>
               </div>
@@ -383,19 +349,27 @@ const ResumePDFTemplate: React.FC<{ resumeRef: React.RefObject<HTMLDivElement>, 
           </div>
         </section>
 
-        {/* Tech Stack */}
-        <section>
-          <h3 style={{ fontSize: '11pt', fontWeight: 800, textTransform: 'uppercase', color: '#4a5568', letterSpacing: '0.05em', margin: '0 0 10px 0', borderBottom: '1.5px solid #cbd5e0', paddingBottom: '6px' }}>
+        <section className="avoid-break">
+          <h3 style={{ fontSize: '11pt', fontWeight: 800, textTransform: 'uppercase', color: '#1a202c', letterSpacing: '0.05em', margin: '0 0 12px 0', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '6px' }}>
             Tech Stack
           </h3>
-          <p style={{ fontSize: '9pt', color: '#4a5568', lineHeight: '1.6', margin: 0 }}>
+          <p style={{ fontSize: '9.5pt', color: '#4a5568', lineHeight: '1.6', margin: 0 }}>
             {result.techStack}
+          </p>
+        </section>
+        
+        <section className="avoid-break">
+          <h3 style={{ fontSize: '11pt', fontWeight: 800, textTransform: 'uppercase', color: '#1a202c', letterSpacing: '0.05em', margin: '0 0 12px 0', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '6px' }}>
+            Languages
+          </h3>
+          <p style={{ fontSize: '10pt', fontWeight: 600, color: '#2d3748', margin: 0 }}>
+            {result.languages}
           </p>
         </section>
       </div>
     </div>
     
-    <footer style={{ marginTop: '30px', paddingTop: '15px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: 0.4, pageBreakInside: 'avoid' }}>
+    <footer style={{ marginTop: 'auto', paddingTop: '20px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: 0.4, pageBreakInside: 'avoid' }}>
       <div style={{ fontSize: '8pt', fontWeight: 800, color: '#4a5568', textTransform: 'uppercase', letterSpacing: '0.2em' }}>
         CareerLift AI • Professional Grade Strategy
       </div>

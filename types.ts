@@ -57,12 +57,15 @@ export interface SavedCV {
   userImage?: string;
 }
 
-export type AppView = 'home' | 'resumes' | 'cv-enhancer' | 'job-board' | 'interview' | 'settings' | 'login' | 'register';
+export type AppView = 'home' | 'resumes' | 'cv-enhancer' | 'job-board' | 'interview' | 'settings' | 'login' | 'register' | 'pricing';
 export type Theme = 'light' | 'dark';
+export type SubscriptionTier = 'free' | 'plus' | 'pro';
+export type Language = 'en' | 'nl' | 'de' | 'es' | 'pt' | 'zh' | 'ar' | 'fr' | 'sr';
 
 export interface User {
   name: string;
   email: string;
+  tier: SubscriptionTier;
 }
 
 export enum InterviewStatus {

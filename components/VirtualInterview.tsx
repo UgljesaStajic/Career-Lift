@@ -1,13 +1,17 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Mic, MicOff, PhoneOff, Play, Loader2, Sparkles, CreditCard, Check } from 'lucide-react';
+import { Mic, MicOff, PhoneOff, Play, Loader2, Sparkles, CreditCard, Check, Lock, Crown, ChevronRight } from 'lucide-react';
 import { getGeminiClient } from '../services/gemini';
 import { decode, encode, decodeAudioData, createPcmBlob } from '../services/audio';
-import { InterviewStatus } from '../types';
+import { InterviewStatus, SubscriptionTier } from '../types';
 import { Modality, LiveServerMessage } from '@google/genai';
 
-const VirtualInterview: React.FC = () => {
-  const [isUnlocked, setIsUnlocked] = useState(false);
+interface VirtualInterviewProps {
+  userTier: SubscriptionTier;
+  onPricingNavigate: () => void;
+}
+
+const VirtualInterview: React.FC<VirtualInterviewProps> = ({ userTier, onPricingNavigate }) => {
   const [status, setStatus] = useState<InterviewStatus>(InterviewStatus.IDLE);
   const [transcripts, setTranscripts] = useState<string[]>([]);
   const [micActive, setMicActive] = useState(false);
@@ -19,7 +23,14 @@ const VirtualInterview: React.FC = () => {
   const sourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
   const sessionRef = useRef<any>(null);
 
+  const isPro = userTier === 'pro';
+
   const startInterview = async () => {
+    if (!isPro) {
+      onPricingNavigate();
+      return;
+    }
+    
     setStatus(InterviewStatus.CONNECTING);
     try {
       const ai = getGeminiClient();
@@ -117,39 +128,58 @@ const VirtualInterview: React.FC = () => {
     setStatus(InterviewStatus.ENDED);
   };
 
-  if (!isUnlocked) {
+  if (!isPro) {
     return (
-      <div className="max-w-2xl mx-auto px-6 py-24 text-center pb-40">
-        <div className="w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-sm">
-          <Sparkles className="w-8 h-8 text-accent" />
-        </div>
-        <h2 className="text-3xl font-black text-main mb-3 tracking-tight">Elite Simulation</h2>
-        <p className="text-base text-muted font-medium mb-12 max-w-md mx-auto opacity-80 leading-relaxed">
-          The ultimate preparation environment for high-stakes executive positions. Master your delivery in real-time.
-        </p>
-
-        <div className="grid md:grid-cols-1 gap-8 mb-12 max-w-sm mx-auto">
-          <div className="bg-card border border-main p-8 rounded-3xl text-left shadow-sm">
-            <h3 className="text-xs font-black uppercase tracking-widest mb-6 opacity-60">Features</h3>
-            <ul className="space-y-4">
-              <li className="flex gap-3 items-center text-sm font-bold text-muted">
-                <div className="bg-accent/10 p-1 rounded-md"><Check className="w-3.5 h-3.5 text-accent" /></div>
-                Executive voice synthesis
-              </li>
-              <li className="flex gap-3 items-center text-sm font-bold text-muted">
-                <div className="bg-accent/10 p-1 rounded-md"><Check className="w-3.5 h-3.5 text-accent" /></div>
-                Semantic feedback loops
-              </li>
-            </ul>
+      <div className="max-w-4xl mx-auto px-6 py-24 text-center pb-40">
+        <div className="glass-card p-12 rounded-[2.5rem] relative overflow-hidden bg-card border border-main shadow-2xl">
+          <div className="absolute top-0 right-0 p-8 opacity-10">
+            <Lock className="w-48 h-48 rotate-12" />
           </div>
-          <div className="bg-accent p-8 rounded-3xl text-white flex flex-col justify-center items-center shadow-2xl">
-            <div className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-2">Lifetime Access</div>
-            <div className="text-4xl font-black mb-8 tracking-tighter">$29.99</div>
+          
+          <div className="relative z-10">
+            <div className="w-20 h-20 bg-accent/10 rounded-3xl flex items-center justify-center mx-auto mb-10 shadow-sm border border-accent/20">
+              <Crown className="w-10 h-10 text-accent" />
+            </div>
+            
+            <h2 className="text-4xl font-black mb-4 tracking-tighter">Elite <span className="text-accent">Voice</span> Simulation</h2>
+            <p className="text-lg font-medium text-muted max-w-xl mx-auto leading-relaxed mb-12 opacity-80">
+              This high-stakes virtual environment requires a <b>Pro</b> subscription. Master your verbal performance with our most advanced AI interaction engine.
+            </p>
+
+            <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto mb-12">
+              <div className="bg-main/40 p-6 rounded-3xl text-left border border-main">
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-accent mb-4">Included in Pro</h4>
+                <ul className="space-y-3">
+                  <li className="flex items-center gap-3 text-xs font-bold text-muted">
+                    <div className="bg-accent/10 p-1 rounded-md"><Check className="w-3 h-3 text-accent" /></div>
+                    Unlimited Simulation Hours
+                  </li>
+                  <li className="flex items-center gap-3 text-xs font-bold text-muted">
+                    <div className="bg-accent/10 p-1 rounded-md"><Check className="w-3 h-3 text-accent" /></div>
+                    Low-Latency Native Audio
+                  </li>
+                </ul>
+              </div>
+              <div className="bg-main/40 p-6 rounded-3xl text-left border border-main">
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-accent mb-4">Advanced Analytics</h4>
+                <ul className="space-y-3">
+                  <li className="flex items-center gap-3 text-xs font-bold text-muted">
+                    <div className="bg-accent/10 p-1 rounded-md"><Check className="w-3 h-3 text-accent" /></div>
+                    Semantic Feedback Loops
+                  </li>
+                  <li className="flex items-center gap-3 text-xs font-bold text-muted">
+                    <div className="bg-accent/10 p-1 rounded-md"><Check className="w-3 h-3 text-accent" /></div>
+                    Performance Scorecards
+                  </li>
+                </ul>
+              </div>
+            </div>
+
             <button 
-              onClick={() => setIsUnlocked(true)}
-              className="w-full py-3.5 bg-white text-accent rounded-xl font-black text-xs hover:bg-white/95 transition-all shadow-md"
+              onClick={onPricingNavigate}
+              className="px-12 py-5 bg-accent text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-2xl hover:scale-105 transition-all flex items-center gap-3 mx-auto"
             >
-              Unlock Service
+              Go Pro <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -159,7 +189,7 @@ const VirtualInterview: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-16 pb-40">
-      <div className="bg-card rounded-3xl p-12 text-center relative overflow-hidden border border-main shadow-sm">
+      <div className="bg-card rounded-[2.5rem] p-12 text-center relative overflow-hidden border border-main shadow-sm">
         <div className="absolute inset-0 opacity-10 pointer-events-none">
           <div className="absolute bottom-0 left-0 right-0 flex items-end justify-center gap-1 h-24 px-12">
             {[...Array(40)].map((_, i) => (
@@ -196,7 +226,7 @@ const VirtualInterview: React.FC = () => {
                 onClick={startInterview}
                 className="px-8 py-3.5 bg-accent hover-bg-accent text-white rounded-xl font-black text-sm transition-all shadow-lg flex items-center gap-2"
               >
-                <Play className="w-4 h-4 fill-current" /> Begin
+                <Play className="w-4 h-4 fill-current" /> Begin Session
               </button>
             ) : (
               <>
@@ -223,7 +253,7 @@ const VirtualInterview: React.FC = () => {
         <div className="space-y-4 max-h-48 overflow-y-auto pr-4 scroll-smooth">
           {transcripts.length > 0 ? (
             transcripts.map((t, i) => (
-              <div key={i} className={`p-4 rounded-2xl text-xs font-medium leading-relaxed ${t.startsWith('Elite:') ? 'bg-accent/5 text-accent border border-accent/10' : 'bg-main text-muted border border-main ml-8'}`}>
+              <div key={i} className={`p-4 rounded-2xl text-xs font-medium leading-relaxed animate-in fade-in slide-in-from-left-2 ${t.startsWith('Elite:') ? 'bg-accent/5 text-accent border border-accent/10' : 'bg-main text-muted border border-main ml-8'}`}>
                 {t}
               </div>
             ))
