@@ -1,0 +1,7 @@
+{
+  "name": "CareerLift AI",
+  "description": "An all-in-one AI career assistant that enhances your CV, finds current job openings, and provides a virtual voice-based interview experience.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
