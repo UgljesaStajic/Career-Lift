@@ -57,7 +57,7 @@ export interface SavedCV {
   userImage?: string;
 }
 
-export type AppView = 'home' | 'resumes' | 'cv-enhancer' | 'job-board' | 'interview' | 'settings' | 'login' | 'register' | 'pricing';
+export type AppView = 'home' | 'resumes' | 'cv-enhancer' | 'job-board' | 'interview' | 'settings' | 'login' | 'register' | 'pricing' | 'admin';
 export type Theme = 'light' | 'dark';
 export type SubscriptionTier = 'free' | 'plus' | 'pro';
 export type Language = 'en' | 'nl' | 'de' | 'es' | 'pt' | 'zh' | 'ar' | 'fr' | 'sr';
@@ -66,6 +66,10 @@ export interface User {
   name: string;
   email: string;
   tier: SubscriptionTier;
+  paymentMethod?: {
+    type: 'stripe' | 'paypal';
+    details: string; // last 4 for stripe, email for paypal
+  };
 }
 
 export enum InterviewStatus {
@@ -74,4 +78,13 @@ export enum InterviewStatus {
   ACTIVE = 'active',
   PAUSED = 'paused',
   ENDED = 'ended'
+}
+
+export interface AdminStats {
+  totalUsers: number;
+  plusUsers: number;
+  proUsers: number;
+  monthlyRevenue: number;
+  stripeRevenue: number;
+  paypalRevenue: number;
 }

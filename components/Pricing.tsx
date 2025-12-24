@@ -1,11 +1,11 @@
 
 import React, { useState } from 'react';
 import { Check, Crown, Briefcase, Zap, Loader2, ArrowLeft, ChevronRight, CreditCard } from 'lucide-react';
-import { SubscriptionTier, AppView } from '../types';
+import { SubscriptionTier, AppView, User } from '../types';
 
 interface PricingProps {
   currentTier: SubscriptionTier;
-  onUpgrade: (tier: SubscriptionTier) => void;
+  onUpgrade: (tier: SubscriptionTier, paymentMethod?: User['paymentMethod']) => void;
   onNavigate: (view: AppView) => void;
 }
 
@@ -61,11 +61,15 @@ const Pricing: React.FC<PricingProps> = ({ currentTier, onUpgrade, onNavigate })
     setShowCheckout(tier);
   };
 
-  const handleFinalPayment = (tier: SubscriptionTier) => {
+  const handleFinalPayment = (tier: SubscriptionTier, methodType: 'stripe' | 'paypal') => {
     setLoading(tier);
     // Simulate real API transaction latency and success
     setTimeout(() => {
-      onUpgrade(tier);
+      const paymentMethod: User['paymentMethod'] = methodType === 'stripe' 
+        ? { type: 'stripe', details: '4242' }
+        : { type: 'paypal', details: 'executive@elite.com' };
+        
+      onUpgrade(tier, paymentMethod);
       setLoading(null);
       setShowCheckout(null);
     }, 2500);
@@ -96,7 +100,7 @@ const Pricing: React.FC<PricingProps> = ({ currentTier, onUpgrade, onNavigate })
             <div className="space-y-4">
               {/* High-fidelity simulated Stripe button */}
               <button 
-                onClick={() => !loading && handleFinalPayment(showCheckout)}
+                onClick={() => !loading && handleFinalPayment(showCheckout, 'stripe')}
                 className="w-full p-6 bg-[#635BFF] text-white rounded-2xl flex items-center justify-between group transition-all hover:bg-[#5851E0] disabled:opacity-50"
                 disabled={!!loading}
               >
@@ -109,7 +113,7 @@ const Pricing: React.FC<PricingProps> = ({ currentTier, onUpgrade, onNavigate })
               
               {/* High-fidelity simulated PayPal button */}
               <button 
-                onClick={() => !loading && handleFinalPayment(showCheckout)}
+                onClick={() => !loading && handleFinalPayment(showCheckout, 'paypal')}
                 className="w-full p-6 bg-[#FFC439] text-[#003087] rounded-2xl flex items-center justify-between group transition-all hover:bg-[#F2BA36] disabled:opacity-50"
                 disabled={!!loading}
               >

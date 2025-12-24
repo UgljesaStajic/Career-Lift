@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Layout, FileText, Search, Video, Home, ChevronRight, Settings as SettingsIcon, Briefcase, User as UserIcon, BookOpen, Crown } from 'lucide-react';
+import { Layout, FileText, Search, Video, Home, ChevronRight, Settings as SettingsIcon, Briefcase, User as UserIcon, BookOpen, Crown, ShieldCheck } from 'lucide-react';
 import { AppView, Theme, User, EnhancedCV, SavedCV, SubscriptionTier, Language } from './types';
 import CVEnhancer from './components/CVEnhancer';
 import JobBoard from './components/JobBoard';
@@ -10,6 +10,7 @@ import Settings from './components/Settings';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import Pricing from './components/Pricing';
+import AdminDashboard from './components/AdminDashboard';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>('home');
@@ -33,6 +34,8 @@ const App: React.FC = () => {
     const stored = localStorage.getItem('careerlift_session');
     return stored ? JSON.parse(stored) : null;
   });
+
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => localStorage.getItem('careerlift_admin_active') === 'true');
 
   useEffect(() => {
     localStorage.setItem('careerlift_cv', userCV);
@@ -87,13 +90,25 @@ const App: React.FC = () => {
 
   const handleLoginSuccess = (userData: User) => {
     setUser(userData);
+    setIsAdmin(false);
     localStorage.setItem('careerlift_session', JSON.stringify(userData));
+    localStorage.removeItem('careerlift_admin_active');
     setCurrentView('home');
+  };
+
+  const handleAdminLogin = () => {
+    setIsAdmin(true);
+    setUser(null);
+    localStorage.setItem('careerlift_admin_active', 'true');
+    localStorage.removeItem('careerlift_session');
+    setCurrentView('admin');
   };
 
   const handleLogout = () => {
     setUser(null);
+    setIsAdmin(false);
     localStorage.removeItem('careerlift_session');
+    localStorage.removeItem('careerlift_admin_active');
     localStorage.removeItem('careerlift_saved_cvs');
     localStorage.removeItem('careerlift_active_cv_id');
     setSavedCVs([]);
@@ -101,9 +116,11 @@ const App: React.FC = () => {
     setCurrentView('login');
   };
 
-  const handleUpgrade = (tier: SubscriptionTier) => {
+  const handleUpgrade = (tier: SubscriptionTier, paymentMethod?: User['paymentMethod']) => {
     if (user) {
-      const updatedUser = { ...user, tier };
+      const updatedUser: User = { ...user, tier, paymentMethod };
+      if (tier === 'free') delete updatedUser.paymentMethod;
+      
       setUser(updatedUser);
       localStorage.setItem('careerlift_session', JSON.stringify(updatedUser));
       
@@ -111,10 +128,26 @@ const App: React.FC = () => {
       const userIndex = storedUsers.findIndex((u: any) => u.email === user.email);
       if (userIndex !== -1) {
         storedUsers[userIndex].tier = tier;
+        storedUsers[userIndex].paymentMethod = updatedUser.paymentMethod;
         localStorage.setItem('careerlift_users', JSON.stringify(storedUsers));
       }
       
       setCurrentView('home');
+    }
+  };
+
+  const handleUpdatePayment = (method: User['paymentMethod']) => {
+    if (user) {
+      const updatedUser = { ...user, paymentMethod: method };
+      setUser(updatedUser);
+      localStorage.setItem('careerlift_session', JSON.stringify(updatedUser));
+      
+      const storedUsers = JSON.parse(localStorage.getItem('careerlift_users') || '[]');
+      const userIndex = storedUsers.findIndex((u: any) => u.email === user.email);
+      if (userIndex !== -1) {
+        storedUsers[userIndex].paymentMethod = method;
+        localStorage.setItem('careerlift_users', JSON.stringify(storedUsers));
+      }
     }
   };
 
@@ -134,14 +167,15 @@ const App: React.FC = () => {
 
   const renderView = () => {
     const protectedViews: AppView[] = ['resumes', 'cv-enhancer', 'job-board', 'interview'];
-    if (protectedViews.includes(currentView) && !user) {
-      return <Login onLoginSuccess={handleLoginSuccess} onNavigate={setCurrentView} />;
+    if (protectedViews.includes(currentView) && !user && !isAdmin) {
+      return <Login onLoginSuccess={handleLoginSuccess} onAdminLogin={handleAdminLogin} onNavigate={setCurrentView} />;
     }
 
     switch (currentView) {
-      case 'login': return <Login onLoginSuccess={handleLoginSuccess} onNavigate={setCurrentView} />;
+      case 'login': return <Login onLoginSuccess={handleLoginSuccess} onAdminLogin={handleAdminLogin} onNavigate={setCurrentView} />;
       case 'register': return <Register onRegisterSuccess={handleLoginSuccess} onNavigate={setCurrentView} />;
       case 'pricing': return <Pricing currentTier={user?.tier || 'free'} onUpgrade={handleUpgrade} onNavigate={setCurrentView} />;
+      case 'admin': return <AdminDashboard onLogout={handleLogout} />;
       case 'resumes':
         return <Resumes 
           savedCVs={savedCVs} 
@@ -174,6 +208,7 @@ const App: React.FC = () => {
           onPricingNavigate={() => setCurrentView('pricing')}
           onUnsubscribe={() => handleUpgrade('free')}
           onDeleteAccount={handleDeleteAccount}
+          onUpdatePayment={handleUpdatePayment}
           language={language}
           setLanguage={setLanguage}
         />;
@@ -193,19 +228,19 @@ const App: React.FC = () => {
               icon={<BookOpen className="w-6 h-6 text-accent" />}
               title="Resume Library"
               description="Your curated repository of optimized executive profiles ready for deployment."
-              onClick={() => { setEditTarget(null); user ? setCurrentView('resumes') : setCurrentView('login'); }}
+              onClick={() => { setEditTarget(null); (user || isAdmin) ? setCurrentView('resumes') : setCurrentView('login'); }}
             />
             <Card 
               icon={<FileText className="w-6 h-6 text-accent" />}
               title="CV Enhancer"
               description="A precision-engineered rewrite that aligns your professional history with market demands."
-              onClick={() => { setEditTarget(null); user ? setCurrentView('cv-enhancer') : setCurrentView('login'); }}
+              onClick={() => { setEditTarget(null); (user || isAdmin) ? setCurrentView('cv-enhancer') : setCurrentView('login'); }}
             />
             <Card 
               icon={<Briefcase className="w-6 h-6 text-accent" />}
               title="Job Board"
               description="Real-time access to the most prestigious openings, curated for your expertise."
-              onClick={() => { setEditTarget(null); user ? setCurrentView('job-board') : setCurrentView('login'); }}
+              onClick={() => { setEditTarget(null); (user || isAdmin) ? setCurrentView('job-board') : setCurrentView('login'); }}
             />
           </div>
 
@@ -214,7 +249,7 @@ const App: React.FC = () => {
               icon={<Video className="w-6 h-6 text-accent" />}
               title="Virtual Interview"
               description="Immersive simulation for high-stakes roles."
-              onClick={() => { setEditTarget(null); user ? setCurrentView('interview') : setCurrentView('login'); }}
+              onClick={() => { setEditTarget(null); (user || isAdmin) ? setCurrentView('interview') : setCurrentView('login'); }}
               badge="Elite"
             />
           </div>
@@ -240,15 +275,20 @@ const App: React.FC = () => {
               <NavItem active={currentView === 'cv-enhancer'} onClick={() => { setEditTarget(null); setCurrentView('cv-enhancer'); }}>Enhancer</NavItem>
               <NavItem active={currentView === 'job-board'} onClick={() => { setEditTarget(null); setCurrentView('job-board'); }}>Board</NavItem>
               <NavItem active={currentView === 'interview'} onClick={() => { setEditTarget(null); setCurrentView('interview'); }}>Interview</NavItem>
+              {isAdmin && (
+                <NavItem active={currentView === 'admin'} onClick={() => setCurrentView('admin')}>
+                   <span className="flex items-center gap-1.5 text-accent"><ShieldCheck className="w-3.5 h-3.5" /> Admin</span>
+                </NavItem>
+              )}
             </div>
 
             <div className="flex items-center gap-3">
-              {user?.tier !== 'free' && (
+              {user?.tier !== 'free' && user && (
                 <div 
                   onClick={() => setCurrentView('pricing')}
                   className="hidden md:flex items-center gap-1.5 px-3 py-1 bg-accent/10 border border-accent/20 rounded-full cursor-pointer hover:bg-accent/20 transition-all"
                 >
-                  <Crown className="w-3.5 h-3.5 text-accent" />
+                  <div className="w-3.5 h-3.5 text-accent"><Crown size={14} /></div>
                   <span className="text-[10px] font-black uppercase tracking-widest text-accent">{user?.tier}</span>
                 </div>
               )}
@@ -257,6 +297,13 @@ const App: React.FC = () => {
                   <span className="text-[10px] font-black uppercase tracking-widest text-muted">{user.name.split(' ')[0]}</span>
                   <div className="w-6 h-6 bg-accent/10 rounded-lg flex items-center justify-center">
                     <UserIcon className="w-3.5 h-3.5 text-accent" />
+                  </div>
+                </div>
+              ) : isAdmin ? (
+                <div onClick={() => setCurrentView('admin')} className="flex items-center gap-2.5 p-1.5 pl-3 border border-accent/40 bg-accent/5 rounded-xl hover:bg-accent/10 cursor-pointer transition-colors">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-accent">Administrator</span>
+                  <div className="w-6 h-6 bg-accent rounded-lg flex items-center justify-center">
+                    <ShieldCheck className="w-3.5 h-3.5 text-white" />
                   </div>
                 </div>
               ) : (
@@ -283,7 +330,11 @@ const App: React.FC = () => {
           <BottomTabItem active={currentView === 'resumes'} onClick={() => { setEditTarget(null); setCurrentView('resumes'); }} icon={<BookOpen className="w-5 h-5" />} label="Resumes" />
           <BottomTabItem active={currentView === 'cv-enhancer'} onClick={() => { setEditTarget(null); setCurrentView('cv-enhancer'); }} icon={<FileText className="w-5 h-5" />} label="Enhancer" />
           <BottomTabItem active={currentView === 'job-board'} onClick={() => { setEditTarget(null); setCurrentView('job-board'); }} icon={<Search className="w-5 h-5" />} label="Jobs" />
-          <BottomTabItem active={currentView === 'interview'} onClick={() => { setEditTarget(null); setCurrentView('interview'); }} icon={<Video className="w-5 h-5" />} label="Interview" />
+          {isAdmin ? (
+             <BottomTabItem active={currentView === 'admin'} onClick={() => setCurrentView('admin')} icon={<ShieldCheck className="w-5 h-5" />} label="Admin" />
+          ) : (
+             <BottomTabItem active={currentView === 'interview'} onClick={() => { setEditTarget(null); setCurrentView('interview'); }} icon={<Video className="w-5 h-5" />} label="Interview" />
+          )}
         </div>
       </div>
 

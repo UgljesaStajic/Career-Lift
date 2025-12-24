@@ -5,10 +5,11 @@ import { AppView, User } from '../../types';
 
 interface LoginProps {
   onLoginSuccess: (user: User) => void;
+  onAdminLogin: () => void;
   onNavigate: (view: AppView) => void;
 }
 
-const Login: React.FC<LoginProps> = ({ onLoginSuccess, onNavigate }) => {
+const Login: React.FC<LoginProps> = ({ onLoginSuccess, onAdminLogin, onNavigate }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -20,6 +21,12 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, onNavigate }) => {
     setError('');
 
     setTimeout(() => {
+      // Admin Credential Check
+      if (email === 'admin' && password === 'Julijana5$') {
+        onAdminLogin();
+        return;
+      }
+
       const storedUsers = JSON.parse(localStorage.getItem('careerlift_users') || '[]');
       const user = storedUsers.find((u: any) => u.email === email && u.password === password);
 
@@ -53,11 +60,11 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, onNavigate }) => {
           )}
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-muted ml-1">Email Address</label>
+            <label className="text-[10px] font-black uppercase tracking-widest text-muted ml-1">Email or Username</label>
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted opacity-40" />
               <input
-                type="email"
+                type="text"
                 required
                 className="w-full pl-11 pr-4 py-3 bg-main border border-main rounded-xl outline-none focus:border-accent font-bold text-sm transition-all"
                 placeholder="name@example.com"

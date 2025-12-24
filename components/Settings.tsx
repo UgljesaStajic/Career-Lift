@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Sun, Moon, Palette, Shield, User as UserIcon, LogOut, Crown, ChevronRight, Languages, CreditCard, Trash2, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Sun, Moon, Palette, Shield, User as UserIcon, LogOut, Crown, ChevronRight, Languages, CreditCard, Trash2, AlertTriangle, CheckCircle, RefreshCw, X, Loader2 } from 'lucide-react';
 import { Theme, User, Language } from '../types';
 import { translations } from '../translations';
 
@@ -12,13 +12,15 @@ interface SettingsProps {
   onPricingNavigate: () => void;
   onUnsubscribe: () => void;
   onDeleteAccount: () => void;
+  onUpdatePayment: (method: User['paymentMethod']) => void;
   language: Language;
   setLanguage: (lang: Language) => void;
 }
 
-const Settings: React.FC<SettingsProps> = ({ theme, setTheme, user, onLogout, onPricingNavigate, onUnsubscribe, onDeleteAccount, language, setLanguage }) => {
+const Settings: React.FC<SettingsProps> = ({ theme, setTheme, user, onLogout, onPricingNavigate, onUnsubscribe, onDeleteAccount, onUpdatePayment, language, setLanguage }) => {
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [showConfirmUnsub, setShowConfirmUnsub] = useState(false);
+  const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
   const [paymentUpdateStatus, setPaymentUpdateStatus] = useState<'idle' | 'loading' | 'success'>('idle');
 
   const t = translations[language] || translations.en;
@@ -52,10 +54,23 @@ const Settings: React.FC<SettingsProps> = ({ theme, setTheme, user, onLogout, on
     { id: 'ar', label: 'العربية' }
   ];
 
-  const handleUpdatePayment = () => {
+  const handleUpdatePaymentMethod = (methodType: 'stripe' | 'paypal') => {
     setPaymentUpdateStatus('loading');
-    setTimeout(() => setPaymentUpdateStatus('success'), 1500);
-    setTimeout(() => setPaymentUpdateStatus('idle'), 4000);
+    
+    // Simulate high-fidelity connection to Stripe/PayPal API
+    setTimeout(() => {
+      const newMethod: User['paymentMethod'] = methodType === 'stripe'
+        ? { type: 'stripe', details: (Math.floor(Math.random() * 9000) + 1000).toString() }
+        : { type: 'paypal', details: user?.email || 'executive@careerlift.ai' };
+      
+      onUpdatePayment(newMethod);
+      setPaymentUpdateStatus('success');
+      
+      setTimeout(() => {
+        setPaymentUpdateStatus('idle');
+        setIsUpdatingPayment(false);
+      }, 1500);
+    }, 2200);
   };
 
   return (
@@ -63,7 +78,7 @@ const Settings: React.FC<SettingsProps> = ({ theme, setTheme, user, onLogout, on
       <h2 className="text-2xl font-black mb-12 tracking-tighter uppercase opacity-80">{t.settingsTitle}</h2>
       
       <div className="space-y-8">
-        {/* Professional Profile */}
+        {/* Professional Profile - Visible Always (Shows login prompt if empty) */}
         <section className="glass-card rounded-3xl p-8 border border-main shadow-sm bg-card relative overflow-hidden">
           <div className="flex items-center gap-3 mb-10">
             <div className="p-2.5 bg-card border border-main rounded-xl shadow-sm"><UserIcon className="w-5 h-5 text-accent" /></div>
@@ -124,6 +139,12 @@ const Settings: React.FC<SettingsProps> = ({ theme, setTheme, user, onLogout, on
           ) : (
             <div className="py-6 text-center">
               <p className="text-xs font-bold text-muted mb-4 opacity-60">Authentication required for full profile management.</p>
+              <button 
+                onClick={onLogout} // This essentially redirects to login if user is null
+                className="px-6 py-2 bg-accent text-white rounded-xl text-[10px] font-black uppercase tracking-widest"
+              >
+                Sign In
+              </button>
             </div>
           )}
         </section>
@@ -186,57 +207,121 @@ const Settings: React.FC<SettingsProps> = ({ theme, setTheme, user, onLogout, on
           </div>
         </section>
 
-        {/* Billing & Payment */}
-        <section className="glass-card rounded-3xl p-8 border border-main shadow-sm bg-card relative overflow-hidden">
-          <div className="flex items-center gap-3 mb-10">
-            <div className="p-2.5 bg-card border border-main rounded-xl shadow-sm"><CreditCard className="w-5 h-5 text-accent" /></div>
-            <div>
-              <h3 className="text-lg font-bold tracking-tight">{t.billing}</h3>
-              <p className="text-[10px] font-bold text-muted uppercase tracking-widest opacity-60">{t.paymentDetails}</p>
-            </div>
-          </div>
-          
-          <div className="p-6 bg-main border border-main rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center text-accent">
-                <CreditCard size={20} />
-              </div>
+        {/* Billing & Payment - Conditional Visibility */}
+        {user && (
+          <section className="glass-card rounded-3xl p-8 border border-main shadow-sm bg-card relative overflow-hidden animate-in fade-in slide-in-from-top-4">
+            <div className="flex items-center gap-3 mb-10">
+              <div className="p-2.5 bg-card border border-main rounded-xl shadow-sm"><CreditCard className="w-5 h-5 text-accent" /></div>
               <div>
-                <p className="text-sm font-black opacity-80">•••• •••• •••• 4242</p>
-                <p className="text-[10px] font-bold text-muted opacity-60 uppercase tracking-widest">Expires 12/26</p>
+                <h3 className="text-lg font-bold tracking-tight">{t.billing}</h3>
+                <p className="text-[10px] font-bold text-muted uppercase tracking-widest opacity-60">{t.paymentDetails}</p>
               </div>
             </div>
-            <button 
-              onClick={handleUpdatePayment}
-              disabled={paymentUpdateStatus !== 'idle'}
-              className="w-full md:w-auto px-6 py-2.5 bg-card border border-main rounded-xl text-[10px] font-black uppercase tracking-widest hover:border-accent hover:text-accent transition-all flex items-center justify-center gap-2"
-            >
-              {paymentUpdateStatus === 'loading' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 
-               paymentUpdateStatus === 'success' ? <CheckCircle className="w-3.5 h-3.5 text-accent" /> : 
-               t.updatePayment}
-            </button>
-          </div>
-        </section>
+            
+            {user.tier === 'free' ? (
+              <div className="p-10 border-2 border-dashed border-main rounded-2xl text-center opacity-40">
+                <p className="text-xs font-bold text-muted uppercase tracking-widest">No payment method linked to free account</p>
+                <button 
+                  onClick={onPricingNavigate}
+                  className="mt-4 text-[10px] font-black text-accent uppercase underline underline-offset-4 hover:opacity-70 transition-all"
+                >
+                  Upgrade to Premium
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="p-6 bg-main border border-main rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center text-accent">
+                      {user.paymentMethod?.type === 'paypal' ? (
+                        <PayPalLogo className="w-6 h-6" />
+                      ) : (
+                        <StripeLogo className="w-6 h-6" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-black opacity-80 uppercase tracking-tight">
+                        {user.paymentMethod?.type === 'paypal' 
+                          ? `PayPal: ${user.paymentMethod.details}`
+                          : `Stripe: •••• •••• •••• ${user.paymentMethod?.details || '4242'}`}
+                      </p>
+                      <p className="text-[10px] font-bold text-muted opacity-60 uppercase tracking-widest">Active Subscription Billing</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setIsUpdatingPayment(!isUpdatingPayment)}
+                    className="w-full md:w-auto px-6 py-2.5 bg-card border border-main rounded-xl text-[10px] font-black uppercase tracking-widest hover:border-accent hover:text-accent transition-all flex items-center justify-center gap-2"
+                  >
+                    {isUpdatingPayment ? <X className="w-3.5 h-3.5" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                    {isUpdatingPayment ? 'Cancel' : t.updatePayment}
+                  </button>
+                </div>
 
-        {/* Danger Zone */}
-        <section className="glass-card rounded-3xl p-8 border border-red-500/20 shadow-sm bg-red-500/[0.02] relative overflow-hidden">
-          <div className="flex items-center gap-3 mb-10">
-            <div className="p-2.5 bg-card border border-red-500/20 rounded-xl shadow-sm"><AlertTriangle className="w-5 h-5 text-red-500" /></div>
-            <div>
-              <h3 className="text-lg font-bold tracking-tight text-red-500">{t.dangerZone}</h3>
-              <p className="text-[10px] font-bold text-red-500/60 uppercase tracking-widest opacity-60">Irreversible professional actions</p>
+                {isUpdatingPayment && (
+                  <div className="p-6 bg-accent/5 border border-accent/20 rounded-2xl animate-in slide-in-from-top-4 duration-300">
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-accent mb-6">Choose New Method</h4>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <button 
+                        onClick={() => handleUpdatePaymentMethod('stripe')}
+                        disabled={paymentUpdateStatus === 'loading'}
+                        className="p-5 bg-card border border-main rounded-xl flex items-center justify-between group hover:border-accent transition-all disabled:opacity-50"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="p-2 bg-main border border-main rounded-lg shadow-sm text-muted group-hover:text-accent transition-colors flex items-center justify-center">
+                            <StripeLogo className="w-5 h-5" />
+                          </div>
+                          <span className="text-xs font-bold opacity-80">Stripe Checkout</span>
+                        </div>
+                        {paymentUpdateStatus === 'loading' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ChevronRight size={14} className="opacity-40 group-hover:translate-x-1 transition-all" />}
+                      </button>
+                      <button 
+                        onClick={() => handleUpdatePaymentMethod('paypal')}
+                        disabled={paymentUpdateStatus === 'loading'}
+                        className="p-5 bg-card border border-main rounded-xl flex items-center justify-between group hover:border-accent transition-all disabled:opacity-50"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="p-2 bg-main border border-main rounded-lg shadow-sm text-muted group-hover:text-accent transition-colors flex items-center justify-center">
+                            <PayPalLogo className="w-5 h-5" />
+                          </div>
+                          <span className="text-xs font-bold opacity-80">PayPal Wallet</span>
+                        </div>
+                        {paymentUpdateStatus === 'loading' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ChevronRight size={14} className="opacity-40 group-hover:translate-x-1 transition-all" />}
+                      </button>
+                    </div>
+                  </div>
+                )}
+                
+                {paymentUpdateStatus === 'success' && (
+                  <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-xl flex items-center justify-center gap-2 text-green-500 text-[10px] font-black uppercase tracking-widest animate-in zoom-in">
+                    <CheckCircle className="w-3.5 h-3.5" /> Method Updated via Secure API
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Danger Zone - Conditional Visibility */}
+        {user && (
+          <section className="glass-card rounded-3xl p-8 border border-red-500/20 shadow-sm bg-red-500/[0.02] relative overflow-hidden animate-in fade-in slide-in-from-top-4">
+            <div className="flex items-center gap-3 mb-10">
+              <div className="p-2.5 bg-card border border-red-500/20 rounded-xl shadow-sm"><AlertTriangle className="w-5 h-5 text-red-500" /></div>
+              <div>
+                <h3 className="text-lg font-bold tracking-tight text-red-500">{t.dangerZone}</h3>
+                <p className="text-[10px] font-bold text-red-500/60 uppercase tracking-widest opacity-60">Irreversible professional actions</p>
+              </div>
             </div>
-          </div>
-          
-          <div className="flex flex-col md:flex-row gap-4">
-            <button 
-              onClick={() => setShowConfirmDelete(true)}
-              className="flex-grow px-6 py-4 bg-red-500/10 text-red-500 border border-red-500/20 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2"
-            >
-              <Trash2 className="w-4 h-4" /> {t.deleteAccount}
-            </button>
-          </div>
-        </section>
+            
+            <div className="flex flex-col md:flex-row gap-4">
+              <button 
+                onClick={() => setShowConfirmDelete(true)}
+                className="flex-grow px-6 py-4 bg-red-500/10 text-red-500 border border-red-500/20 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" /> {t.deleteAccount}
+              </button>
+            </div>
+          </section>
+        )}
       </div>
 
       {/* Confirmation Modals */}
@@ -276,9 +361,16 @@ const Settings: React.FC<SettingsProps> = ({ theme, setTheme, user, onLogout, on
   );
 };
 
-const Loader2 = (props: any) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+// Internal brand icons (Monochrome Favicon Marks)
+const StripeLogo = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} xmlns="http://www.w3.org/2000/svg">
+    <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z" fill="currentColor" />
+  </svg>
+);
+
+const PayPalLogo = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 48 48" className={className} xmlns="http://www.w3.org/2000/svg">
+    <path d="M37.7 14.8c-.4-4.2-3.4-7.8-8-7.8h-12.7c-.8 0-1.4.6-1.5 1.4L11.7 33.3c-.1.4 0 .9.3 1.2.3.3.7.5 1.2.5h5.4l-1 6.3c-.1.6.4 1.1 1 1.1h5.8c.8 0 1.4-.6 1.5-1.4l1-6.1h.4c5.1 0 9.1-2.1 10.3-7.5.7-2.9.5-6.8-.9-12.6z" fill="currentColor" />
   </svg>
 );
 
