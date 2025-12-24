@@ -60,6 +60,7 @@ export async function enhanceCV(cvContent: string, jobDescription: string): Prom
   Target Job: """${jobDescription}"""
   
   OUTPUT FORMAT: A highly structured JSON object that fits a two-column professional layout.
+  - fullName: The candidate's full name extracted from the CV.
   - jobTitle: A strategic professional title (e.g., "Digital Marketing Strategist").
   - contact: Current phone, email, and location.
   - summary: A powerful, visionary profile summary.
@@ -80,6 +81,7 @@ export async function enhanceCV(cvContent: string, jobDescription: string): Prom
       responseSchema: {
         type: Type.OBJECT,
         properties: {
+          fullName: { type: Type.STRING },
           jobTitle: { type: Type.STRING },
           contact: {
             type: Type.OBJECT,
@@ -146,7 +148,7 @@ export async function enhanceCV(cvContent: string, jobDescription: string): Prom
           analysis: { type: Type.STRING },
           score: { type: Type.NUMBER }
         },
-        required: ["jobTitle", "contact", "summary", "experience", "education", "certifications", "skills", "techStack", "languages", "analysis", "score"]
+        required: ["fullName", "jobTitle", "contact", "summary", "experience", "education", "certifications", "skills", "techStack", "languages", "analysis", "score"]
       }
     }
   });

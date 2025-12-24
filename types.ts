@@ -23,6 +23,7 @@ export interface SkillCategory {
 }
 
 export interface EnhancedCV {
+  fullName: string;
   jobTitle: string;
   contact: {
     phone: string;

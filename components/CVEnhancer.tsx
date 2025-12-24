@@ -90,8 +90,8 @@ const CVEnhancer: React.FC<CVEnhancerProps> = ({ currentCV, initialJobDescriptio
     setTimeout(async () => {
       const element = resumeRef.current;
       const opt = {
-        margin: [10, 0, 10, 0],
-        filename: `${user?.name.replace(/\s+/g, '_') || 'Portfolio'}_CV.pdf`,
+        margin: [15, 0, 15, 0], // Optimized margins (15mm ~ 1.5cm, visually balanced with 2cm request)
+        filename: `${result?.fullName?.replace(/\s+/g, '_') || 'Portfolio'}_CV.pdf`,
         image: { type: 'jpeg', quality: 1.0 },
         html2canvas: { 
           scale: 4, 
@@ -105,7 +105,7 @@ const CVEnhancer: React.FC<CVEnhancerProps> = ({ currentCV, initialJobDescriptio
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { 
           mode: ['avoid-all', 'css', 'legacy'], 
-          avoid: ['header', 'section', 'h3', 'h4', '.avoid-break'] 
+          avoid: ['header', 'section', 'h1', 'h2', 'h3', 'h4', '.avoid-break'] 
         }
       };
 
@@ -173,97 +173,165 @@ const CVEnhancer: React.FC<CVEnhancerProps> = ({ currentCV, initialJobDescriptio
           </div>
         </div>
 
-        {/* HIGH-FIDELITY PDF TEMPLATE */}
+        {/* HIGH-FIDELITY PDF TEMPLATE BASED ON USER IMAGE */}
         <div className="absolute left-[-9999px] top-[-9999px] pointer-events-none">
           <div ref={resumeRef} 
                style={{ 
                  width: '210mm', 
-                 minHeight: '297mm',
-                 padding: '20mm 20mm',
+                 minHeight: '297mm', // Kept minHeight to visualize A4 in renderer, but content flex removal prevents gaps
+                 padding: '0 15mm', 
                  backgroundColor: 'white',
                  display: 'flex',
                  flexDirection: 'column',
                  fontFamily: "'Inter', sans-serif",
-                 color: '#1a202c'
+                 color: '#1a202c',
+                 lineHeight: '1.3' // Slightly tighter line height to fit more content
                }}>
             
-            <header className="avoid-break" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '30px', borderBottom: '2px solid #3b82f6', paddingBottom: '25px' }}>
+            {/* Header Section */}
+            <header className="avoid-break" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px', paddingTop: '5px' }}>
               <div style={{ flex: 1 }}>
-                <h1 style={{ fontSize: '32pt', fontWeight: 900, color: '#1a202c', margin: 0, letterSpacing: '-0.02em', lineHeight: '1.1', textTransform: 'uppercase' }}>
-                  {user?.name || result.contact.email.split('@')[0].replace('.', ' ') || 'CANDIDATE NAME'}
+                <h1 style={{ fontSize: '26pt', fontWeight: 800, color: '#000000', margin: '0 0 2px 0', letterSpacing: '-0.02em', lineHeight: '1', textTransform: 'uppercase' }}>
+                  {result.fullName || user?.name || 'NAME SURNAME'}
                 </h1>
-                <h2 style={{ fontSize: '18pt', fontWeight: 600, color: '#3b82f6', margin: '8px 0 15px 0' }}>
+                <h2 style={{ fontSize: '14pt', fontWeight: 600, color: '#3b82f6', margin: '0 0 10px 0' }}>
                   {result.jobTitle}
                 </h2>
                 
-                <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10pt', fontWeight: 600, color: '#4a5568' }}>
-                     <div style={{ border: '1.5px solid #3b82f6', padding: '4px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                       <Phone size={10} color="#3b82f6" strokeWidth={3} />
-                     </div>
+                <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '8.5pt', fontWeight: 500, color: '#333' }}>
+                    <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Phone size={9} color="white" />
+                    </div>
                     {result.contact.phone}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10pt', fontWeight: 600, color: '#4a5568' }}>
-                    <div style={{ border: '1.5px solid #3b82f6', padding: '4px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Globe size={10} color="#3b82f6" strokeWidth={3} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '8.5pt', fontWeight: 500, color: '#333' }}>
+                    <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Globe size={9} color="white" />
                     </div>
                     {result.contact.email}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10pt', fontWeight: 600, color: '#4a5568' }}>
-                    <div style={{ border: '1.5px solid #3b82f6', padding: '4px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <MapPin size={10} color="#3b82f6" strokeWidth={3} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '8.5pt', fontWeight: 500, color: '#333' }}>
+                    <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <MapPin size={9} color="white" />
                     </div>
                     {result.contact.location}
                   </div>
                 </div>
               </div>
               
-              <div style={{ width: '130px', height: '150px', borderRadius: '4px', overflow: 'hidden', backgroundColor: '#f7fafc', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
+              <div style={{ width: '100px', height: '100px', borderRadius: '0px', overflow: 'hidden', backgroundColor: '#f3f4f6', border: '1px solid #e5e7eb', flexShrink: 0 }}>
                 {userImage ? (
                   <img src={userImage} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
-                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#cbd5e0' }}>
-                    <UserIcon size={48} />
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>
+                    <UserIcon size={40} />
                   </div>
                 )}
               </div>
             </header>
 
-            <div style={{ display: 'flex', gap: '40px', flexGrow: 1 }}>
-              <div style={{ width: '120mm', display: 'flex', flexDirection: 'column', gap: '30px' }}>
-                <section className="avoid-break">
-                  <h3 style={{ fontSize: '12pt', fontWeight: 800, textTransform: 'uppercase', color: '#1a202c', letterSpacing: '0.05em', margin: '0 0 12px 0', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '6px' }}>
-                    Profile Narrative
+            {/* Main Content (Two Columns) */}
+            <div style={{ display: 'flex', gap: '30px' }}> {/* Removed flex: 1 to prevent vertical stretching */}
+              
+              {/* Left Column (65%) */}
+              <div style={{ width: '125mm', display: 'flex', flexDirection: 'column' }}>
+                
+                {/* Profile Summary */}
+                <section style={{ marginBottom: '15px' }}>
+                  <h3 style={{ fontSize: '9.5pt', fontWeight: 800, textTransform: 'uppercase', color: '#666', letterSpacing: '0.05em', margin: '0 0 6px 0', borderBottom: '1px solid #ddd', paddingBottom: '3px' }}>
+                    Profile Summary
                   </h3>
-                  <p style={{ fontSize: '10.5pt', lineHeight: '1.7', color: '#2d3748', margin: 0, textAlign: 'justify' }}>
+                  <p style={{ fontSize: '9pt', color: '#444', margin: 0, lineHeight: '1.4', textAlign: 'justify' }}>
                     {result.summary}
                   </p>
                 </section>
 
+                {/* Experience */}
                 <section>
-                  <h3 style={{ fontSize: '12pt', fontWeight: 800, textTransform: 'uppercase', color: '#1a202c', letterSpacing: '0.05em', margin: '0 0 18px 0', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '6px' }}>
-                    Work Experience
+                  <h3 style={{ fontSize: '9.5pt', fontWeight: 800, textTransform: 'uppercase', color: '#666', letterSpacing: '0.05em', margin: '0 0 10px 0', borderBottom: '1px solid #ddd', paddingBottom: '3px' }}>
+                    Experience
                   </h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     {result.experience.map((exp, i) => (
-                      <div key={i} className="avoid-break" style={{ pageBreakInside: 'avoid' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
-                          <h4 style={{ fontSize: '13pt', fontWeight: 800, color: '#1a202c', margin: 0 }}>
-                            {exp.role}
-                          </h4>
-                          <span style={{ fontSize: '10pt', fontWeight: 700, color: '#3b82f6' }}>{exp.dates}</span>
+                      <div key={i} style={{ breakInside: 'avoid' }}>
+                        <h4 style={{ fontSize: '10.5pt', fontWeight: 800, color: '#000', margin: '0 0 2px 0' }}>
+                          {exp.role} <span style={{ fontWeight: 400, color: '#666' }}>|</span> {exp.company}
+                        </h4>
+                        <div style={{ fontSize: '8.5pt', fontWeight: 600, fontStyle: 'italic', color: '#3b82f6', marginBottom: '4px' }}>
+                          {exp.dates} <span style={{ fontWeight: 400, color: '#666' }}>|</span> {exp.location}
                         </div>
-                        <div style={{ fontSize: '11pt', fontWeight: 700, fontStyle: 'italic', color: '#4a5568', marginBottom: '10px' }}>
-                          {exp.company} <span style={{ fontWeight: 400 }}>|</span> {exp.location}
-                        </div>
-                        <p style={{ fontSize: '10pt', lineHeight: '1.6', color: '#4a5568', marginBottom: '10px' }}>
+                        <p style={{ fontSize: '9pt', color: '#444', marginBottom: '6px', lineHeight: '1.3' }}>
                           {exp.description}
                         </p>
-                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          {exp.achievements.map((ach, j) => (
-                            <li key={j} style={{ fontSize: '10pt', lineHeight: '1.4', color: '#2d3748', display: 'flex', gap: '10px' }}>
-                              <span style={{ color: '#3b82f6', fontWeight: 900 }}>•</span>
-                              <span>{ach}</span>
+                        {exp.achievements.length > 0 && (
+                          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            {exp.achievements.map((ach, j) => (
+                              <li key={j} style={{ fontSize: '8.5pt', color: '#444', display: 'flex', gap: '6px', lineHeight: '1.3' }}>
+                                <span style={{ color: '#3b82f6' }}>•</span>
+                                <span>{ach}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              </div>
+
+              {/* Right Column (35%) */}
+              <div style={{ width: '55mm', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                
+                {/* Education */}
+                <section style={{ breakInside: 'avoid' }}>
+                  <h3 style={{ fontSize: '9.5pt', fontWeight: 800, textTransform: 'uppercase', color: '#666', letterSpacing: '0.05em', margin: '0 0 8px 0', borderBottom: '1px solid #ddd', paddingBottom: '3px' }}>
+                    Education
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {result.education.map((edu, i) => (
+                      <div key={i}>
+                        <div style={{ fontSize: '9pt', fontWeight: 800, color: '#000', lineHeight: '1.2' }}>{edu.degree}</div>
+                        <div style={{ fontSize: '8.5pt', fontWeight: 700, fontStyle: 'italic', color: '#444', margin: '1px 0' }}>
+                          {edu.institution}
+                        </div>
+                        <div style={{ fontSize: '8pt', color: '#666' }}>{edu.locationAndDates}</div>
+                        {edu.specialization && <div style={{ fontSize: '8pt', color: '#666', fontStyle: 'italic' }}>{edu.specialization}</div>}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                {/* Certifications */}
+                {result.certifications && result.certifications.length > 0 && (
+                  <section style={{ breakInside: 'avoid' }}>
+                    <h3 style={{ fontSize: '9.5pt', fontWeight: 800, textTransform: 'uppercase', color: '#666', letterSpacing: '0.05em', margin: '0 0 8px 0', borderBottom: '1px solid #ddd', paddingBottom: '3px' }}>
+                      Certifications
+                    </h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {result.certifications.map((cert, i) => (
+                        <div key={i}>
+                          <div style={{ fontSize: '8.5pt', fontWeight: 800, color: '#000', lineHeight: '1.2' }}>{cert.name}</div>
+                          <div style={{ fontSize: '8pt', color: '#666' }}>{cert.issuerAndYear}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* Skills & Expertise */}
+                <section style={{ breakInside: 'avoid' }}>
+                  <h3 style={{ fontSize: '9.5pt', fontWeight: 800, textTransform: 'uppercase', color: '#666', letterSpacing: '0.05em', margin: '0 0 8px 0', borderBottom: '1px solid #ddd', paddingBottom: '3px' }}>
+                    Expertise
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {result.skills.map((skill, i) => (
+                      <div key={i}>
+                        <div style={{ fontSize: '8.5pt', fontWeight: 800, color: '#000', marginBottom: '2px' }}>{skill.category}:</div>
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                          {skill.items.map((item, j) => (
+                            <li key={j} style={{ fontSize: '8pt', color: '#444', display: 'flex', gap: '4px', lineHeight: '1.2' }}>
+                              <span>•</span> {item}
                             </li>
                           ))}
                         </ul>
@@ -271,70 +339,28 @@ const CVEnhancer: React.FC<CVEnhancerProps> = ({ currentCV, initialJobDescriptio
                     ))}
                   </div>
                 </section>
-              </div>
 
-              <div style={{ width: '50mm', display: 'flex', flexDirection: 'column', gap: '30px' }}>
-                <section className="avoid-break">
-                  <h3 style={{ fontSize: '11pt', fontWeight: 800, textTransform: 'uppercase', color: '#1a202c', letterSpacing: '0.05em', margin: '0 0 15px 0', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '6px' }}>
-                    Education
-                  </h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-                    {result.education.map((edu, i) => (
-                      <div key={i}>
-                        <div style={{ fontSize: '10.5pt', fontWeight: 800, color: '#1a202c', lineHeight: '1.2' }}>{edu.degree}</div>
-                        <div style={{ fontSize: '9pt', fontWeight: 700, fontStyle: 'italic', color: '#4a5568', margin: '2px 0' }}>{edu.institution}</div>
-                        <div style={{ fontSize: '8.5pt', color: '#718096' }}>{edu.locationAndDates}</div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-
-                <section className="avoid-break">
-                  <h3 style={{ fontSize: '11pt', fontWeight: 800, textTransform: 'uppercase', color: '#1a202c', letterSpacing: '0.05em', margin: '0 0 15px 0', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '6px' }}>
-                    Skills & Expertise
-                  </h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
-                    {result.skills.map((skill, i) => (
-                      <div key={i}>
-                        <div style={{ fontSize: '10pt', fontWeight: 800, color: '#1a202c', marginBottom: '8px' }}>{skill.category}</div>
-                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                          {skill.items.map((item, j) => (
-                            <li key={j} style={{ fontSize: '9.5pt', color: '#4a5568', lineHeight: '1.4' }}>• {item}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-
-                <section className="avoid-break">
-                  <h3 style={{ fontSize: '11pt', fontWeight: 800, textTransform: 'uppercase', color: '#1a202c', letterSpacing: '0.05em', margin: '0 0 12px 0', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '6px' }}>
+                {/* Tech Stack */}
+                <section style={{ breakInside: 'avoid' }}>
+                  <h3 style={{ fontSize: '9.5pt', fontWeight: 800, textTransform: 'uppercase', color: '#666', letterSpacing: '0.05em', margin: '0 0 6px 0', borderBottom: '1px solid #ddd', paddingBottom: '3px' }}>
                     Tech Stack
                   </h3>
-                  <p style={{ fontSize: '9.5pt', color: '#4a5568', lineHeight: '1.6', margin: 0 }}>
+                  <p style={{ fontSize: '8pt', color: '#444', lineHeight: '1.3', margin: 0 }}>
                     {result.techStack}
                   </p>
                 </section>
                 
-                <section className="avoid-break">
-                  <h3 style={{ fontSize: '11pt', fontWeight: 800, textTransform: 'uppercase', color: '#1a202c', letterSpacing: '0.05em', margin: '0 0 12px 0', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '6px' }}>
+                {/* Languages */}
+                <section style={{ breakInside: 'avoid' }}>
+                  <h3 style={{ fontSize: '9.5pt', fontWeight: 800, textTransform: 'uppercase', color: '#666', letterSpacing: '0.05em', margin: '0 0 6px 0', borderBottom: '1px solid #ddd', paddingBottom: '3px' }}>
                     Languages
                   </h3>
-                  <p style={{ fontSize: '10pt', fontWeight: 600, color: '#2d3748', margin: 0 }}>
+                  <p style={{ fontSize: '8.5pt', color: '#444', margin: 0 }}>
                     {result.languages}
                   </p>
                 </section>
               </div>
             </div>
-
-            <footer className="pdf-footer" style={{ marginTop: 'auto', paddingTop: '20px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', opacity: 0.4 }}>
-              <div style={{ fontSize: '8pt', fontWeight: 800, color: '#4a5568', textTransform: 'uppercase', letterSpacing: '0.2em' }}>
-                CareerLift AI • Professional Grade Strategy
-              </div>
-              <div style={{ fontSize: '8pt', color: '#718096' }}>
-                CONFIDENTIAL PORTFOLIO
-              </div>
-            </footer>
           </div>
         </div>
       </div>
